@@ -1,0 +1,25 @@
+{
+    "app": {
+      "port": 8080,
+      "rto": 30000000000,
+      "wto": 30000000000
+    },
+    "repository": {
+      "db_host": "localhost",
+      "db_port": 5432,
+      "db_name": "1337b04rd",
+      "db_username": "postgres",
+      "db_password": "postgres",
+      "db_ssl_mode": "disable",
+      "max_conn": 10,
+      "max_idle_conn": 10
+    },
+    "s3": {
+      "endpoint": "localhost:9000",
+      "access_key": "minioadmin",
+      "secret_key": "minioadmin",
+      "post_bucket": "post-images",
+      "comment_bucket": "comment-images",
+      "use_ssl": false
+    }
+  }
