@@ -1,4 +1,4 @@
-CREATE TABLE aggregated_trading_data (
+CREATE TABLE prices (
     pair_name TEXT NOT NULL,
     exchange TEXT NOT NULL,
     timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
