@@ -8,7 +8,7 @@ import (
 
 type PricesRepository interface {
 	GetLatestPrice(symbol string) (domain.GetPrice, error)
-	GetLatestPriceExchange(symbol string, exchange string) (domain.GetPrice, error)
+	GetLatestExchangePrice(symbol string, exchange string) (domain.GetPrice, error)
 
 	GetHighestPrice(symbol string) (domain.GetPrice, error)
 	GetHighestPriceExchange(symbol string, exchange string) (domain.GetPrice, error)
