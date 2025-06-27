@@ -1,11 +1,10 @@
 package main
 
 import (
+	"crypto/internal/app"
 	"flag"
 	"fmt"
 	"os"
-
-	"crypto/internal/app"
 )
 
 // INFO:

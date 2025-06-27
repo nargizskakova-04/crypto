@@ -2,12 +2,11 @@ package exchange
 
 import (
 	"context"
+	"crypto/internal/core/domain"
+	"crypto/internal/core/port"
 	"log/slog"
 	"math/rand"
 	"time"
-
-	"crypto/internal/core/domain"
-	"crypto/internal/core/port"
 )
 
 // TestExchangeAdapter генерирует синтетические данные для Test Mode

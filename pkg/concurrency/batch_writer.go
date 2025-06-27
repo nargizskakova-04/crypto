@@ -3,14 +3,13 @@ package concurrency
 
 import (
 	"context"
+	"crypto/internal/core/domain"
 	"database/sql"
 	"fmt"
 	"log/slog"
 	"strings"
 	"sync"
 	"time"
-
-	"crypto/internal/core/domain"
 )
 
 // BatchWriter группирует данные и записывает их батчами в PostgreSQL

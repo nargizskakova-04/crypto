@@ -1,10 +1,9 @@
 package service
 
 import (
+	"crypto/internal/core/port"
 	"errors"
 	"log/slog"
-
-	"crypto/internal/core/port"
 )
 
 type PriceService struct {

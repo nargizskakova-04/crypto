@@ -2,9 +2,8 @@ package port
 
 import (
 	"context"
-	"time"
-
 	"crypto/internal/core/domain"
+	"time"
 )
 
 // AppMode тип для режима приложения
@@ -114,7 +113,6 @@ type PriceService interface {
 	// Получение экстремальных цен за период
 	GetHighestPrice(ctx context.Context, symbol string, period time.Duration) (*domain.PriceResponse, error)
 	GetHighestExchangePrice(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.PriceResponse, error)
-
 	GetLowestPrice(ctx context.Context, symbol string, period time.Duration) (*domain.PriceResponse, error)
 	GetLowestExchangePrice(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.PriceResponse, error)
 

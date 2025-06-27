@@ -1,11 +1,10 @@
 package app
 
 import (
-	"fmt"
-	"log"
-
 	"crypto/internal/config"
 	"crypto/internal/server"
+	"fmt"
+	"log"
 )
 
 const cfgPath = "./config/config.json"

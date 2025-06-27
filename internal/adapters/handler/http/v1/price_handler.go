@@ -359,105 +359,6 @@ func (h *ModeHandler) SwitchToLiveMode(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, response)
 }
 
-// internal/adapters/handler/http/v1/health_handler.go
-
-type HealthHandler struct {
-	priceRepository  port.PricesRepository
-	cacheRepository  port.CacheRepository
-	exchangeAdapters map[string]port.ExchangeAdapter
-}
-
-func NewHealthHandler(
-	priceRepository port.PricesRepository,
-	cacheRepository port.CacheRepository,
-	exchangeAdapters map[string]port.ExchangeAdapter,
-) *HealthHandler {
-	return &HealthHandler{
-		priceRepository:  priceRepository,
-		cacheRepository:  cacheRepository,
-		exchangeAdapters: exchangeAdapters,
-	}
-}
-
-// GET /health
-func (h *HealthHandler) GetHealth(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	health := domain.HealthStatus{
-		Status:       "ok",
-		Timestamp:    time.Now(),
-		Version:      "1.0.0",
-		Dependencies: make(map[string]interface{}),
-	}
-
-	// Check PostgreSQL
-	if err := h.priceRepository.HealthCheck(r.Context()); err != nil {
-		health.Status = "degraded"
-		health.Dependencies["postgresql"] = map[string]interface{}{
-			"status": "down",
-			"error":  err.Error(),
-		}
-	} else {
-		health.Dependencies["postgresql"] = map[string]interface{}{
-			"status": "up",
-		}
-	}
-
-	// Check Redis
-	if h.cacheRepository != nil {
-		if err := h.cacheRepository.HealthCheck(r.Context()); err != nil {
-			health.Dependencies["redis"] = map[string]interface{}{
-				"status": "down",
-				"error":  err.Error(),
-			}
-		} else {
-			health.Dependencies["redis"] = map[string]interface{}{
-				"status": "up",
-			}
-		}
-	} else {
-		health.Dependencies["redis"] = map[string]interface{}{
-			"status": "not_configured",
-		}
-	}
-
-	// Check exchanges
-	exchanges := make(map[string]interface{})
-	for name, adapter := range h.exchangeAdapters {
-		info := adapter.GetExchangeInfo()
-		exchanges[name] = map[string]interface{}{
-			"status": info.Status,
-			"host":   info.Host,
-			"port":   info.Port,
-		}
-	}
-	health.Dependencies["exchanges"] = exchanges
-
-	// Set overall status based on critical components
-	if health.Status == "ok" {
-		// PostgreSQL is critical
-		if pgStatus, ok := health.Dependencies["postgresql"].(map[string]interface{}); ok {
-			if pgStatus["status"] != "up" {
-				health.Status = "down"
-			}
-		}
-	}
-
-	statusCode := http.StatusOK
-	if health.Status == "down" {
-		statusCode = http.StatusServiceUnavailable
-	} else if health.Status == "degraded" {
-		statusCode = http.StatusPartialContent
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(health)
-}
-
 // internal/adapters/handler/http/v1/routes.go
 
 func SetRoutes(
@@ -535,4 +436,111 @@ func handlePriceRoutes(handler *PriceHandler) http.HandlerFunc {
 			http.Error(w, "Unknown price type", http.StatusNotFound)
 		}
 	}
+}
+
+type ModeGetter interface {
+	GetCurrentMode() port.AppMode
+}
+
+// Update the HealthHandler constructor
+func NewHealthHandler(
+	priceRepository port.PricesRepository,
+	cacheRepository port.CacheRepository,
+	exchangeAdapters map[string]port.ExchangeAdapter,
+	modeGetter ModeGetter, // Add this parameter
+) *HealthHandler {
+	return &HealthHandler{
+		priceRepository:  priceRepository,
+		cacheRepository:  cacheRepository,
+		exchangeAdapters: exchangeAdapters,
+		modeGetter:       modeGetter, // Add this field
+	}
+}
+
+// Update the HealthHandler struct
+type HealthHandler struct {
+	priceRepository  port.PricesRepository
+	cacheRepository  port.CacheRepository
+	exchangeAdapters map[string]port.ExchangeAdapter
+	modeGetter       ModeGetter // Add this field
+}
+
+// Update the GetHealth method
+func (h *HealthHandler) GetHealth(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	health := domain.HealthStatus{
+		Status:       "ok",
+		Timestamp:    time.Now(),
+		Version:      "1.0.0",
+		Mode:         string(h.modeGetter.GetCurrentMode()), // Add current mode
+		Dependencies: make(map[string]interface{}),
+	}
+
+	// Check PostgreSQL
+	if err := h.priceRepository.HealthCheck(r.Context()); err != nil {
+		health.Status = "degraded"
+		health.Dependencies["postgresql"] = map[string]interface{}{
+			"status": "down",
+			"error":  err.Error(),
+		}
+	} else {
+		health.Dependencies["postgresql"] = map[string]interface{}{
+			"status": "up",
+		}
+	}
+
+	// Check Redis
+	if h.cacheRepository != nil {
+		if err := h.cacheRepository.HealthCheck(r.Context()); err != nil {
+			health.Dependencies["redis"] = map[string]interface{}{
+				"status": "down",
+				"error":  err.Error(),
+			}
+		} else {
+			health.Dependencies["redis"] = map[string]interface{}{
+				"status": "up",
+			}
+		}
+	} else {
+		health.Dependencies["redis"] = map[string]interface{}{
+			"status": "not_configured",
+		}
+	}
+
+	// Check exchanges
+	exchanges := make(map[string]interface{})
+	for name, adapter := range h.exchangeAdapters {
+		info := adapter.GetExchangeInfo()
+		exchanges[name] = map[string]interface{}{
+			"status": info.Status,
+			"host":   info.Host,
+			"port":   info.Port,
+		}
+	}
+	health.Dependencies["exchanges"] = exchanges
+
+	// Set overall status based on critical components
+	if health.Status == "ok" {
+		// PostgreSQL is critical
+		if pgStatus, ok := health.Dependencies["postgresql"].(map[string]interface{}); ok {
+			if pgStatus["status"] != "up" {
+				health.Status = "down"
+			}
+		}
+	}
+
+	statusCode := http.StatusOK
+	if health.Status == "down" {
+		statusCode = http.StatusServiceUnavailable
+	} else if health.Status == "degraded" {
+		statusCode = http.StatusPartialContent
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(health)
 }

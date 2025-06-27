@@ -12,10 +12,11 @@ import (
 	"syscall"
 	"time"
 
-	"crypto/internal/adapters/cache/redis"
 	"crypto/internal/adapters/exchange"
 	v1 "crypto/internal/adapters/handler/http/v1"
-	"crypto/internal/adapters/repository/postgres"
+	redis "crypto/internal/adapters/redis"
+	postgres "crypto/internal/adapters/repository"
+
 	"crypto/internal/config"
 	"crypto/internal/core/port"
 	"crypto/internal/core/service/marketsrv"
@@ -185,7 +186,12 @@ func (app *App) initHTTPServer() error {
 	// Initialize handlers
 	priceHandler := v1.NewPriceHandler(app.priceService)
 	modeHandler := v1.NewModeHandler(app)
-	healthHandler := v1.NewHealthHandler(app.priceRepository, app.cacheRepository, app.exchangeAdapters)
+	healthHandler := v1.NewHealthHandler(
+		app.priceRepository,
+		app.cacheRepository,
+		app.exchangeAdapters,
+		app, // Pass app as ModeGetter since it implements GetCurrentMode()
+	)
 
 	// Set up routes
 	v1.SetRoutes(app.router, priceHandler, modeHandler, healthHandler)

@@ -3,14 +3,13 @@ package exchange
 import (
 	"bufio"
 	"context"
+	"crypto/internal/core/domain"
+	"crypto/internal/core/port"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net"
 	"time"
-
-	"crypto/internal/core/domain"
-	"crypto/internal/core/port"
 )
 
 // LiveExchangeAdapter подключается к реальным exchange simulators

@@ -2,13 +2,12 @@ package concurrency
 
 import (
 	"context"
+	"crypto/internal/core/domain"
+	"crypto/internal/core/port"
 	"fmt"
 	"log/slog"
 	"sync"
 	"time"
-
-	"crypto/internal/core/domain"
-	"crypto/internal/core/port"
 )
 
 // DataProcessor обрабатывает входящие данные и агрегирует их

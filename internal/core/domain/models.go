@@ -18,7 +18,7 @@ type MarketData struct {
 	Symbol    string  `json:"symbol"`
 	Price     float64 `json:"price"`
 	Timestamp int64   `json:"timestamp"`
-	Exchange  string  `json:"exchange"`
+	Exchange  string  `json:"exchange"` // Exchange name to identify source
 }
 
 // AggregatedData представляет агрегированные данные за период (для PostgreSQL)
@@ -122,16 +122,6 @@ func (p PriceUpdate) Validate() error {
 }
 
 // Methods for MarketData
-
-// ToPriceUpdate конвертирует MarketData в PriceUpdate
-func (m MarketData) ToPriceUpdate() PriceUpdate {
-	return PriceUpdate{
-		Exchange:  m.Exchange,
-		Symbol:    m.Symbol,
-		Price:     m.Price,
-		Timestamp: time.Unix(m.Timestamp, 0),
-	}
-}
 
 // Methods for AggregatedData
 
@@ -298,4 +288,50 @@ func (e ExchangeInfo) GetAddress() string {
 		return e.Host
 	}
 	return fmt.Sprintf("%s:%d", e.Host, e.Port)
+}
+
+// ToPriceUpdate converts MarketData to PriceUpdate for internal processing
+func (m MarketData) ToPriceUpdate() PriceUpdate {
+	return PriceUpdate{
+		Exchange:  m.Exchange,
+		Symbol:    m.Symbol,
+		Price:     m.Price,
+		Timestamp: time.Unix(m.Timestamp, 0),
+	}
+}
+
+// Validate checks if MarketData is valid
+func (m MarketData) Validate() error {
+	if m.Exchange == "" {
+		return ErrEmptyExchange
+	}
+	if m.Symbol == "" {
+		return ErrEmptySymbol
+	}
+	if !IsValidSymbol(m.Symbol) {
+		return ErrInvalidSymbol
+	}
+	if m.Price <= 0 {
+		return ErrInvalidPrice
+	}
+	if m.Timestamp <= 0 {
+		return ErrEmptyTimestamp
+	}
+	return nil
+}
+
+// GetKey returns a unique key for the market data
+func (m MarketData) GetKey() string {
+	return m.Exchange + ":" + m.Symbol
+}
+
+// IsRecent checks if the market data timestamp is recent (within last 5 minutes)
+func (m MarketData) IsRecent() bool {
+	dataTime := time.Unix(m.Timestamp, 0)
+	return time.Since(dataTime) <= 5*time.Minute
+}
+
+// GetTimestamp returns the timestamp as time.Time
+func (m MarketData) GetTimestamp() time.Time {
+	return time.Unix(m.Timestamp, 0)
 }
