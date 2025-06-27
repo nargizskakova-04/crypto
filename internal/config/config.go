@@ -8,100 +8,173 @@ import (
 	"time"
 )
 
-func GetConfig(path string) (*Config, error) {
-	f, err := os.Open(path)
+type Config struct {
+	App        App                 `json:"app"`
+	Database   Database            `json:"database"`
+	Redis      Redis               `json:"redis"`
+	Exchanges  map[string]Exchange `json:"exchanges"`
+	Processing Processing          `json:"processing"`
+}
+
+type App struct {
+	Port         int    `json:"port"`
+	Mode         string `json:"mode"` // "live" или "test"
+	ReadTimeout  string `json:"read_timeout"`
+	WriteTimeout string `json:"write_timeout"`
+}
+
+type Database struct {
+	Host               string `json:"host"`
+	Port               int    `json:"port"`
+	Name               string `json:"name"`
+	Username           string `json:"username"`
+	Password           string `json:"password"`
+	SSLMode            string `json:"ssl_mode"`
+	MaxConnections     int    `json:"max_connections"`
+	MaxIdleConnections int    `json:"max_idle_connections"`
+}
+
+type Redis struct {
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	Password string `json:"password"`
+	DB       int    `json:"db"`
+	TTL      string `json:"ttl"`
+}
+
+type Exchange struct {
+	Host              string `json:"host"`
+	Port              int    `json:"port"`
+	ReconnectInterval string `json:"reconnect_interval"`
+}
+
+type Processing struct {
+	BatchSize           int    `json:"batch_size"`
+	BatchTimeout        string `json:"batch_timeout"`
+	WorkersPerExchange  int    `json:"workers_per_exchange"`
+	AggregationInterval string `json:"aggregation_interval"`
+}
+
+func LoadConfig(path string) (*Config, error) {
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open config file: %w", err)
 	}
-	defer f.Close()
+	defer file.Close()
 
 	var cfg Config
-	if err = json.NewDecoder(f).Decode(&cfg); err != nil {
+	if err := json.NewDecoder(file).Decode(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}
 
-	// Convert durations
-	cfg.App.RTO = cfg.App.RTO * time.Millisecond
-	cfg.App.WTO = cfg.App.WTO * time.Millisecond
-
 	// Override with environment variables
-	if port := os.Getenv("PORT"); port != "" {
-		if p, err := strconv.Atoi(port); err == nil {
-			cfg.App.Port = p
-		}
-	}
-
-	// DB environment variables
-	if host := os.Getenv("DB_HOST"); host != "" {
-		cfg.Repository.DBHost = host
-	}
-	if port := os.Getenv("DB_PORT"); port != "" {
-		if p, err := strconv.Atoi(port); err == nil {
-			cfg.Repository.DBPort = p
-		}
-	}
-	if user := os.Getenv("DB_USER"); user != "" {
-		cfg.Repository.DBUsername = user
-	}
-	if password := os.Getenv("DB_PASSWORD"); password != "" {
-		cfg.Repository.DBPassword = password
-	}
-	if name := os.Getenv("DB_NAME"); name != "" {
-		cfg.Repository.DBName = name
-	}
-
-	// S3 environment variables
-	if endpoint := os.Getenv("S3_ENDPOINT"); endpoint != "" {
-		cfg.S3.Endpoint = endpoint
-	}
-	if accessKey := os.Getenv("S3_ACCESS_KEY"); accessKey != "" {
-		cfg.S3.AccessKey = accessKey
-	}
-	if secretKey := os.Getenv("S3_SECRET_KEY"); secretKey != "" {
-		cfg.S3.SecretKey = secretKey
-	}
-	if postBucket := os.Getenv("S3_POST_BUCKET"); postBucket != "" {
-		cfg.S3.PostBucket = postBucket
-	}
-	if commentBucket := os.Getenv("S3_COMMENT_BUCKET"); commentBucket != "" {
-		cfg.S3.CommentBucket = commentBucket
-	}
-	if useSSL := os.Getenv("S3_USE_SSL"); useSSL != "" {
-		cfg.S3.UseSSL, _ = strconv.ParseBool(useSSL)
-	}
+	overrideFromEnv(&cfg)
 
 	return &cfg, nil
 }
 
-type Config struct {
-	App        App        `json:"app"`
-	Repository Repository `json:"repository"`
-	S3         S3         `json:"s3"`
+func overrideFromEnv(cfg *Config) {
+	// App
+	if port := os.Getenv("APP_PORT"); port != "" {
+		if p, err := strconv.Atoi(port); err == nil {
+			cfg.App.Port = p
+		}
+	}
+	if mode := os.Getenv("APP_MODE"); mode != "" {
+		cfg.App.Mode = mode
+	}
+
+	// Database
+	if host := os.Getenv("DB_HOST"); host != "" {
+		cfg.Database.Host = host
+	}
+	if port := os.Getenv("DB_PORT"); port != "" {
+		if p, err := strconv.Atoi(port); err == nil {
+			cfg.Database.Port = p
+		}
+	}
+	if user := os.Getenv("DB_USER"); user != "" {
+		cfg.Database.Username = user
+	}
+	if password := os.Getenv("DB_PASSWORD"); password != "" {
+		cfg.Database.Password = password
+	}
+	if name := os.Getenv("DB_NAME"); name != "" {
+		cfg.Database.Name = name
+	}
+
+	// Redis
+	if host := os.Getenv("REDIS_HOST"); host != "" {
+		cfg.Redis.Host = host
+	}
+	if port := os.Getenv("REDIS_PORT"); port != "" {
+		if p, err := strconv.Atoi(port); err == nil {
+			cfg.Redis.Port = p
+		}
+	}
+	if password := os.Getenv("REDIS_PASSWORD"); password != "" {
+		cfg.Redis.Password = password
+	}
 }
 
-type App struct {
-	Port int           `json:"port"`
-	RTO  time.Duration `json:"rto"`
-	WTO  time.Duration `json:"wto"`
+// Helper methods
+
+func (cfg *Config) GetDatabaseDSN() string {
+	return fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.Username,
+		cfg.Database.Password,
+		cfg.Database.Name,
+		cfg.Database.SSLMode,
+	)
 }
 
-type Repository struct {
-	DBHost      string `json:"db_host"`
-	DBSrv       string `json:"db_srv"`
-	DBPort      int    `json:"db_port"`
-	DBUsername  string `json:"db_username"`
-	DBPassword  string `json:"db_password"`
-	DBName      string `json:"db_name"`
-	DBSSLMode   string `json:"db_ssl_mode"`
-	MaxConn     int    `json:"max_conn"`
-	MaxIdleConn int    `json:"max_idle_conn"`
+func (cfg *Config) GetRedisAddress() string {
+	return fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port)
 }
 
-type S3 struct {
-	Endpoint      string `json:"endpoint"`
-	AccessKey     string `json:"access_key"`
-	SecretKey     string `json:"secret_key"`
-	PostBucket    string `json:"post_bucket"`
-	CommentBucket string `json:"comment_bucket"`
-	UseSSL        bool   `json:"use_ssl"`
+func (cfg *Config) GetReadTimeout() time.Duration {
+	if d, err := time.ParseDuration(cfg.App.ReadTimeout); err == nil {
+		return d
+	}
+	return 30 * time.Second // default
+}
+
+func (cfg *Config) GetWriteTimeout() time.Duration {
+	if d, err := time.ParseDuration(cfg.App.WriteTimeout); err == nil {
+		return d
+	}
+	return 30 * time.Second // default
+}
+
+func (cfg *Config) GetRedisTTL() time.Duration {
+	if d, err := time.ParseDuration(cfg.Redis.TTL); err == nil {
+		return d
+	}
+	return 60 * time.Second // default
+}
+
+func (cfg *Config) GetBatchTimeout() time.Duration {
+	if d, err := time.ParseDuration(cfg.Processing.BatchTimeout); err == nil {
+		return d
+	}
+	return 30 * time.Second // default
+}
+
+func (cfg *Config) GetAggregationInterval() time.Duration {
+	if d, err := time.ParseDuration(cfg.Processing.AggregationInterval); err == nil {
+		return d
+	}
+	return 1 * time.Minute // default
+}
+
+func (cfg *Config) GetExchangeReconnectInterval(exchangeName string) time.Duration {
+	if exchange, ok := cfg.Exchanges[exchangeName]; ok {
+		if d, err := time.ParseDuration(exchange.ReconnectInterval); err == nil {
+			return d
+		}
+	}
+	return 5 * time.Second // default
 }

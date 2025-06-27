@@ -1,25 +1,48 @@
 {
-    "app": {
-      "port": 8080,
-      "rto": 30000000000,
-      "wto": 30000000000
+  "app": {
+    "port": 8080,
+    "mode": "test",
+    "read_timeout": "30s",
+    "write_timeout": "30s"
+  },
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "marketflow",
+    "username": "postgres",
+    "password": "postgres",
+    "ssl_mode": "disable",
+    "max_connections": 25,
+    "max_idle_connections": 10
+  },
+  "redis": {
+    "host": "localhost",
+    "port": 6379,
+    "password": "",
+    "db": 0,
+    "ttl": "60s"
+  },
+  "exchanges": {
+    "exchange1": {
+      "host": "localhost",
+      "port": 40101,
+      "reconnect_interval": "5s"
     },
-    "repository": {
-      "db_host": "localhost",
-      "db_port": 5432,
-      "db_name": "1337b04rd",
-      "db_username": "postgres",
-      "db_password": "postgres",
-      "db_ssl_mode": "disable",
-      "max_conn": 10,
-      "max_idle_conn": 10
+    "exchange2": {
+      "host": "localhost",
+      "port": 40102,
+      "reconnect_interval": "5s"
     },
-    "s3": {
-      "endpoint": "localhost:9000",
-      "access_key": "minioadmin",
-      "secret_key": "minioadmin",
-      "post_bucket": "post-images",
-      "comment_bucket": "comment-images",
-      "use_ssl": false
+    "exchange3": {
+      "host": "localhost",
+      "port": 40103,
+      "reconnect_interval": "5s"
     }
+  },
+  "processing": {
+    "batch_size": 50,
+    "batch_timeout": "30s",
+    "workers_per_exchange": 5,
+    "aggregation_interval": "1m"
   }
+}

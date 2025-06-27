@@ -1,34 +1,48 @@
 package app
 
-// import (
-// 	"fmt"
-// 	"forum/internal/config"
-// 	"forum/internal/server"
-// 	"log"
-// )
+import (
+	"fmt"
+	"log"
 
-// const cfgPath = "./config/config.json"
+	"crypto/internal/config"
+	"crypto/internal/server"
+)
 
-// func Start() error {
-// 	log.Println("Loading configuration...")
-// 	config, err := config.GetConfig(cfgPath)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to get config: %w", err)
-// 	}
+const cfgPath = "./config/config.json"
 
-// 	log.Printf("Configuration loaded: port=%d\n", config.App.Port)
+func Start(portFlag int) error {
+	log.Println("Loading configuration...")
+	config, err := config.LoadConfig(cfgPath)
+	if err != nil {
+		return fmt.Errorf("failed to get config: %w", err)
+	}
 
-// 	log.Println("Creating application instance...")
-// 	app := server.NewApp(config)
+	// Override port from command line if provided
+	if portFlag > 0 {
+		config.App.Port = portFlag
+		log.Printf("Port overridden from command line: %d\n", portFlag)
+	}
 
-// 	log.Println("Initializing application...")
-// 	if err := app.Initialize(); err != nil {
-// 		return fmt.Errorf("failed to initialize app: %w", err)
-// 	}
+	log.Printf("Configuration loaded: port=%d, mode=%s\n", config.App.Port, config.App.Mode)
 
-// 	log.Println("Starting server...")
-// 	app.Run()
+	log.Println("Creating MarketFlow application instance...")
+	app := server.NewApp(config)
 
-// 	log.Println("Server stopped")
-// 	return nil
-// }
+	log.Println("Initializing MarketFlow application...")
+	if err := app.Initialize(); err != nil {
+		return fmt.Errorf("failed to initialize app: %w", err)
+	}
+
+	log.Println("Starting MarketFlow server...")
+
+	// Setup graceful shutdown
+	app.SetupGracefulShutdown()
+
+	// Run the server
+	if err := app.Run(); err != nil {
+		return fmt.Errorf("server error: %w", err)
+	}
+
+	log.Println("MarketFlow server stopped")
+	return nil
+}
