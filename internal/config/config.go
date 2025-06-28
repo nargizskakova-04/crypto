@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"time"
 )
 
 func GetConfig(path string) (*Config, error) {
@@ -20,15 +19,13 @@ func GetConfig(path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}
 
-	// Convert durations
-	cfg.App.RTO = cfg.App.RTO * time.Millisecond
-	cfg.App.WTO = cfg.App.WTO * time.Millisecond
-
 	// Override with environment variables
 	if port := os.Getenv("PORT"); port != "" {
-		if p, err := strconv.Atoi(port); err == nil {
-			cfg.App.Port = p
+		p, err := strconv.Atoi(port)
+		if err != nil {
+			return nil, err
 		}
+		cfg.App.Port = p
 	}
 
 	// DB environment variables
@@ -50,24 +47,33 @@ func GetConfig(path string) (*Config, error) {
 		cfg.Repository.DBName = name
 	}
 
-	// S3 environment variables
-	if endpoint := os.Getenv("S3_ENDPOINT"); endpoint != "" {
-		cfg.S3.Endpoint = endpoint
+	// Redis environment variables (ДОБАВЛЕНО)
+	if redisHost := os.Getenv("REDIS_HOST"); redisHost != "" {
+		cfg.Cache.RedisHost = redisHost
 	}
-	if accessKey := os.Getenv("S3_ACCESS_KEY"); accessKey != "" {
-		cfg.S3.AccessKey = accessKey
+	if redisPort := os.Getenv("REDIS_PORT"); redisPort != "" {
+		cfg.Cache.RedisPort, _ = strconv.Atoi(redisPort)
 	}
-	if secretKey := os.Getenv("S3_SECRET_KEY"); secretKey != "" {
-		cfg.S3.SecretKey = secretKey
+	if redisPassword := os.Getenv("REDIS_PASSWORD"); redisPassword != "" {
+		cfg.Cache.RedisPassword = redisPassword
 	}
-	if postBucket := os.Getenv("S3_POST_BUCKET"); postBucket != "" {
-		cfg.S3.PostBucket = postBucket
+	if redisDB := os.Getenv("REDIS_DB"); redisDB != "" {
+		cfg.Cache.RedisDB, _ = strconv.Atoi(redisDB)
 	}
-	if commentBucket := os.Getenv("S3_COMMENT_BUCKET"); commentBucket != "" {
-		cfg.S3.CommentBucket = commentBucket
+	if poolSize := os.Getenv("REDIS_POOL_SIZE"); poolSize != "" {
+		cfg.Cache.PoolSize, _ = strconv.Atoi(poolSize)
 	}
-	if useSSL := os.Getenv("S3_USE_SSL"); useSSL != "" {
-		cfg.S3.UseSSL, _ = strconv.ParseBool(useSSL)
+	if minIdleConns := os.Getenv("REDIS_MIN_IDLE_CONNS"); minIdleConns != "" {
+		cfg.Cache.MinIdleConns, _ = strconv.Atoi(minIdleConns)
+	}
+	if dialTimeout := os.Getenv("REDIS_DIAL_TIMEOUT"); dialTimeout != "" {
+		cfg.Cache.DialTimeout = dialTimeout
+	}
+	if readTimeout := os.Getenv("REDIS_READ_TIMEOUT"); readTimeout != "" {
+		cfg.Cache.ReadTimeout = readTimeout
+	}
+	if writeTimeout := os.Getenv("REDIS_WRITE_TIMEOUT"); writeTimeout != "" {
+		cfg.Cache.WriteTimeout = writeTimeout
 	}
 
 	return &cfg, nil
@@ -76,18 +82,15 @@ func GetConfig(path string) (*Config, error) {
 type Config struct {
 	App        App        `json:"app"`
 	Repository Repository `json:"repository"`
-	S3         S3         `json:"s3"`
+	Cache      Cache      `json:"cache"`
 }
 
 type App struct {
-	Port int           `json:"port"`
-	RTO  time.Duration `json:"rto"`
-	WTO  time.Duration `json:"wto"`
+	Port int `json:"port"`
 }
 
 type Repository struct {
 	DBHost      string `json:"db_host"`
-	DBSrv       string `json:"db_srv"`
 	DBPort      int    `json:"db_port"`
 	DBUsername  string `json:"db_username"`
 	DBPassword  string `json:"db_password"`
@@ -97,11 +100,14 @@ type Repository struct {
 	MaxIdleConn int    `json:"max_idle_conn"`
 }
 
-type S3 struct {
-	Endpoint      string `json:"endpoint"`
-	AccessKey     string `json:"access_key"`
-	SecretKey     string `json:"secret_key"`
-	PostBucket    string `json:"post_bucket"`
-	CommentBucket string `json:"comment_bucket"`
-	UseSSL        bool   `json:"use_ssl"`
+type Cache struct {
+	RedisHost     string `json:"redis_host"`
+	RedisPort     int    `json:"redis_port"`
+	RedisPassword string `json:"redis_password"`
+	RedisDB       int    `json:"redis_db"`
+	PoolSize      int    `json:"pool_size"`
+	MinIdleConns  int    `json:"min_idle_conns"`
+	DialTimeout   string `json:"dial_timeout"`
+	ReadTimeout   string `json:"read_timeout"`
+	WriteTimeout  string `json:"write_timeout"`
 }

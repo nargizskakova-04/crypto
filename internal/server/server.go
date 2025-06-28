@@ -6,13 +6,17 @@ import (
 	"log/slog"
 	"net/http"
 
+	"crypto/internal/adapters/repository/postgres"
 	"crypto/internal/config"
+
+	"github.com/redis/go-redis/v9"
 )
 
 type App struct {
-	cfg    *config.Config
-	router *http.ServeMux
-	db     *sql.DB
+	cfg         *config.Config
+	router      *http.ServeMux
+	db          *sql.DB
+	redisClient *redis.Client
 }
 
 func NewApp(cfg *config.Config) *App {
@@ -24,6 +28,15 @@ func NewApp(cfg *config.Config) *App {
 func (app *App) Initialize() error {
 	slog.Info("Initializing application...")
 	app.router = http.NewServeMux()
+
+	// Database connection
+	dbConn, err := postgres.NewDbConnInstance(&app.cfg.Repository)
+	if err != nil {
+		slog.Error("Connection to database failed", "error", err)
+		return err
+	}
+	app.db = dbConn
+	slog.Info("Database connected successfully")
 
 	// Database connection
 	// dbConn, err := postgres.NewDbConnInstance(&app.cfg.Repository)
@@ -81,10 +94,8 @@ func (app *App) Initialize() error {
 
 func (app *App) Run() {
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", app.cfg.App.Port),
-		Handler:      app.router,
-		ReadTimeout:  app.cfg.App.RTO,
-		WriteTimeout: app.cfg.App.WTO,
+		Addr:    fmt.Sprintf(":%d", app.cfg.App.Port),
+		Handler: app.router,
 	}
 
 	slog.Info("Starting server", "port", app.cfg.App.Port)

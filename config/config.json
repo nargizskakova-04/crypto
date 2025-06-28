@@ -1,25 +1,26 @@
 {
     "app": {
-      "port": 8080,
-      "rto": 30000000000,
-      "wto": 30000000000
+      "port": 8080
     },
     "repository": {
       "db_host": "localhost",
       "db_port": 5432,
-      "db_name": "1337b04rd",
+      "db_name": "market",
       "db_username": "postgres",
       "db_password": "postgres",
       "db_ssl_mode": "disable",
       "max_conn": 10,
       "max_idle_conn": 10
     },
-    "s3": {
-      "endpoint": "localhost:9000",
-      "access_key": "minioadmin",
-      "secret_key": "minioadmin",
-      "post_bucket": "post-images",
-      "comment_bucket": "comment-images",
-      "use_ssl": false
+    "cache": {
+      "redis_host": "localhost",
+      "redis_port": 6379,
+      "redis_password": "",
+      "redis_db": 0,
+      "pool_size": 10,
+      "min_idle_conns": 5,
+      "dial_timeout": "5s",
+      "read_timeout": "3s",
+      "write_timeout": "3s"
     }
   }
