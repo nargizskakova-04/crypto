@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"crypto/internal/adapters/repository/postgres"
+	// "your-project/internal/cache"       // TODO: раскомментировать когда готов
+	// "your-project/internal/handlers/v1" // TODO: раскомментировать когда готов
 	"crypto/internal/config"
 
 	"github.com/redis/go-redis/v9"
@@ -94,57 +96,13 @@ func (app *App) Initialize() error {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"message":"Market Data API is running"}`))
 	})
+	// TODO: Добавить настоящие handlers когда будут готовы
+	// marketDataRepository := postgres.NewMarketDataRepository(dbConn)
+	// marketDataService := service.NewMarketDataService(marketDataRepository, nil)
+	// marketDataHandler := v1.NewMarketDataHandler(marketDataService)
+	// v1.SetMarketRoutes(app.router, marketDataHandler, healthHandler)
 
-	// Database connection
-	// dbConn, err := postgres.NewDbConnInstance(&app.cfg.Repository)
-	// if err != nil {
-	// 	app.logger.Error("Connection to db failed", err)
-	// 	return err
-	// }
-	// app.db = dbConn
-	// app.logger.Info("Database connected successfully")
-
-	// Initialize repositories
-	// userRepository := postgres.NewUserRepository(dbConn)
-
-	// Initialize Rick and Morty API client
-	// rickAPIImpl := rickAPI.NewRickAPI(app.logger)
-
-	// Initialize S3 storage with config values
-	// s3Config := app.cfg.S3
-	// app.logger.Info("Initializing S3 storage",
-	// 	"endpoint", s3Config.Endpoint,
-	// 	"post_bucket", s3Config.PostBucket,
-	// 	"comment_bucket", s3Config.CommentBucket)
-
-	// s3Storage := storage.NewS3Storage(
-	// 	s3Config.Endpoint,
-	// 	s3Config.AccessKey,
-	// 	s3Config.SecretKey,
-	// 	s3Config.PostBucket,
-	// 	s3Config.CommentBucket,
-	// 	s3Config.UseSSL,
-	// 	app.logger,
-	// )
-
-	// Initialize services
-	// userService := usersrv.NewUserService(userRepository, app.logger)
-
-	// Initialize middleware
-	// sessionMiddleware := middleware.NewSessionMiddleware(userService, sessionService, characterService, app.logger)
-
-	// Initialize handlers
-	// postHandler := v1.NewPostHandler(postService, commentService, s3Storage, app.logger)
-
-	// Set up routes
-	// v1.SetRoutes(app.router, postHandler, sessionMiddleware)
-
-	// // Add static file server for uploaded files (fallback for local development)
-	// fileServer := http.FileServer(http.Dir("./uploads"))
-	// app.router.Handle("/uploads/", http.StripPrefix("/uploads/", fileServer))
-
-	// Start background tasks
-	// go app.startBackgroundTasks(postService, sessionService)
+	// Start background tasks (ВРЕМЕННО УПРОЩЕНО)
 
 	go app.startMarketDataProcessor()
 
@@ -165,27 +123,6 @@ func (app *App) Run() {
 		panic(err)
 	}
 }
-
-// func (app *App) startBackgroundTasks(postService port.PostService, sessionService port.SessionService) {
-// 	postTicker := time.NewTicker(1 * time.Minute)
-// 	defer postTicker.Stop()
-
-// 	sessionTicker := time.NewTicker(1 * time.Hour)
-// 	defer sessionTicker.Stop()
-
-// 	for {
-// 		select {
-// 		case <-postTicker.C:
-// 			if err := postService.CheckPostsForDeletion(); err != nil {
-// 				app.logger.Error("Failed to check posts for deletion", err)
-// 			}
-// 		case <-sessionTicker.C:
-// 			if err := sessionService.CleanupExpiredSessions(); err != nil {
-// 				app.logger.Error("Failed to cleanup expired sessions", err)
-// 			}
-// 		}
-// 	}
-// }
 
 // Background task для обработки market data (ВРЕМЕННО ОТКЛЮЧЕН)
 func (app *App) startMarketDataProcessor() {
