@@ -48,14 +48,14 @@ func Start() error {
 	slog.Info("Creating application instance...")
 	app := server.NewApp(config)
 
-	// log.Println("Initializing application...")
-	// if err := app.Initialize(); err != nil {
-	// 	return fmt.Errorf("failed to initialize app: %w", err)
-	// }
+	slog.Info("Initializing application...")
+	if err := app.Initialize(); err != nil {
+		return fmt.Errorf("failed to initialize app: %w", err)
+	}
 
-	// log.Println("Starting server...")
-	// app.Run()
+	slog.Info("Starting server...")
+	app.Run()
 
-	// log.Println("Server stopped")
-	// return nil
+	slog.Info("Server stopped")
+	return nil
 }
