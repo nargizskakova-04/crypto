@@ -264,8 +264,6 @@ func (r *RedisAdapter) Ping(ctx context.Context) error {
 
 // parseTimeSeriesKey parses a timeseries key to extract components
 func parseTimeSeriesKey(key string) []string {
-	// Simple split by ':'
-	// Format: timeseries:SYMBOL:EXCHANGE
 	result := make([]string, 0)
 	current := ""
 	for _, char := range key {

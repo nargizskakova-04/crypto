@@ -53,10 +53,10 @@ func NewExchangeService() port.ExchangeService {
 	numWorkers := 15 // 5 workers per exchange as specified in requirements
 
 	return &ExchangeService{
-		currentMode:        "test", // Default to test mode
+		currentMode:        "live", // Default to live mode
 		liveAdapters:       liveAdapters,
 		testAdapters:       testAdapters,
-		activeAdapters:     testAdapters, // Start with test adapters
+		activeAdapters:     liveAdapters, // Start with live adapters
 		aggregatedDataChan: make(chan domain.MarketData, 1000),
 		workerPool:         make([]chan domain.MarketData, numWorkers),
 		resultChan:         make(chan domain.MarketData, 1000),
@@ -73,10 +73,10 @@ func NewExchangeServiceWithAdapters(liveAdapters, testAdapters []port.ExchangeAd
 	numWorkers := 15 // 5 workers per exchange
 
 	return &ExchangeService{
-		currentMode:        "test",
+		currentMode:        "live", // Default to live mode
 		liveAdapters:       liveAdapters,
 		testAdapters:       testAdapters,
-		activeAdapters:     testAdapters,
+		activeAdapters:     liveAdapters, // Start with live adapters
 		aggregatedDataChan: make(chan domain.MarketData, 1000),
 		workerPool:         make([]chan domain.MarketData, numWorkers),
 		resultChan:         make(chan domain.MarketData, 1000),

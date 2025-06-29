@@ -1,4 +1,4 @@
-package service
+package prices
 
 import (
 	"errors"
