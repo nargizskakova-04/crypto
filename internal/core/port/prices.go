@@ -6,7 +6,7 @@ import (
 	"crypto/internal/core/domain"
 )
 
-type PricesRepository interface {
+type MarketRepository interface {
 	GetLatestPrice(symbol string) (domain.GetPrice, error)
 	GetLatestExchangePrice(symbol string, exchange string) (domain.GetPrice, error)
 
@@ -24,3 +24,5 @@ type PricesRepository interface {
 	GetAveragePriceExchange(symbol string, exchange string) (domain.GetPrice, error)
 	GetAveragePriceInDurationExchange(symbol string, exchange string, from time.Time, to time.Time) (domain.GetPrice, error)
 }
+
+type MarketService interface{}
