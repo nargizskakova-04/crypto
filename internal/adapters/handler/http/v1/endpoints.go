@@ -3,7 +3,7 @@ package v1
 import "net/http"
 
 // SetMarketRoutes sets up all market data API routes
-func SetMarketRoutes(router *http.ServeMux, marketHandler *MarketDataHandler, healthHandler *HealthHandler, modeHandler *ModeHandler) {
+func SetMarketRoutes(router *http.ServeMux, marketHandler *PriceHandler, healthHandler *HealthHandler, modeHandler *ModeHandler) {
 	// Market Data API Routes
 	setPriceRoutes(marketHandler, router)
 
@@ -15,7 +15,7 @@ func SetMarketRoutes(router *http.ServeMux, marketHandler *MarketDataHandler, he
 }
 
 // setPriceRoutes sets up all price-related endpoints
-func setPriceRoutes(handler *MarketDataHandler, router *http.ServeMux) {
+func setPriceRoutes(handler *PriceHandler, router *http.ServeMux) {
 	// Latest Price Endpoints
 	router.HandleFunc("GET /prices/latest/{symbol}", handler.GetLatestPrice)
 	router.HandleFunc("GET /prices/latest/{exchange}/{symbol}", handler.GetLatestPriceByExchange)
