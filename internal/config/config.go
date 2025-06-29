@@ -76,6 +76,41 @@ func GetConfig(path string) (*Config, error) {
 		cfg.Cache.WriteTimeout = writeTimeout
 	}
 
+	// Exchange environment variables
+	if len(cfg.Exchanges.LiveExchanges) >= 3 {
+		if exchange1Host := os.Getenv("EXCHANGE1_HOST"); exchange1Host != "" {
+			cfg.Exchanges.LiveExchanges[0].Host = exchange1Host
+		}
+		if exchange1Port := os.Getenv("EXCHANGE1_PORT"); exchange1Port != "" {
+			if p, err := strconv.Atoi(exchange1Port); err == nil {
+				cfg.Exchanges.LiveExchanges[0].Port = p
+			}
+		}
+		if exchange2Host := os.Getenv("EXCHANGE2_HOST"); exchange2Host != "" {
+			cfg.Exchanges.LiveExchanges[1].Host = exchange2Host
+		}
+		if exchange2Port := os.Getenv("EXCHANGE2_PORT"); exchange2Port != "" {
+			if p, err := strconv.Atoi(exchange2Port); err == nil {
+				cfg.Exchanges.LiveExchanges[1].Port = p
+			}
+		}
+		if exchange3Host := os.Getenv("EXCHANGE3_HOST"); exchange3Host != "" {
+			cfg.Exchanges.LiveExchanges[2].Host = exchange3Host
+		}
+		if exchange3Port := os.Getenv("EXCHANGE3_PORT"); exchange3Port != "" {
+			if p, err := strconv.Atoi(exchange3Port); err == nil {
+				cfg.Exchanges.LiveExchanges[2].Port = p
+			}
+		}
+	}
+
+	// Test mode environment variables
+	if updateInterval := os.Getenv("TEST_UPDATE_INTERVAL_MS"); updateInterval != "" {
+		if interval, err := strconv.Atoi(updateInterval); err == nil {
+			cfg.Exchanges.TestMode.UpdateIntervalMs = interval
+		}
+	}
+
 	return &cfg, nil
 }
 
@@ -83,6 +118,7 @@ type Config struct {
 	App        App        `json:"app"`
 	Repository Repository `json:"repository"`
 	Cache      Cache      `json:"cache"`
+	Exchanges  Exchanges  `json:"exchanges"`
 }
 
 type App struct {
@@ -110,4 +146,20 @@ type Cache struct {
 	DialTimeout   string `json:"dial_timeout"`
 	ReadTimeout   string `json:"read_timeout"`
 	WriteTimeout  string `json:"write_timeout"`
+}
+
+type Exchanges struct {
+	LiveExchanges []ExchangeConfig `json:"live_exchanges"`
+	TestMode      TestModeConfig   `json:"test_mode"`
+}
+
+type ExchangeConfig struct {
+	Name string `json:"name"`
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+type TestModeConfig struct {
+	UpdateIntervalMs int      `json:"update_interval_ms"`
+	Symbols          []string `json:"symbols"`
 }
