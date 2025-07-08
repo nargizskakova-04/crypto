@@ -1,7 +1,12 @@
 package port
 
 import (
+<<<<<<< HEAD
 	"context"
+=======
+	"time"
+
+>>>>>>> parent of 6a7ec7f (fixed)
 	"crypto/internal/core/domain"
 	"time"
 )
@@ -25,6 +30,7 @@ type PriceRepository interface {
 	GetAveragePriceInDurationExchange(symbol string, exchange string, from time.Time, to time.Time) (domain.GetPrice, error)
 }
 
+<<<<<<< HEAD
 type PriceService interface {
 	GetLatestPrice(ctx context.Context, symbol string) (*domain.MarketData, error)
 
@@ -42,3 +48,6 @@ type PriceService interface {
 
 	GetAveragePriceByExchange(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.MarketData, error)
 }
+=======
+type PriceService interface{}
+>>>>>>> parent of 6a7ec7f (fixed)
