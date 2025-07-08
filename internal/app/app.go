@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"crypto/internal/config"
 	"crypto/internal/server"
@@ -30,20 +32,20 @@ func Start() error {
 
 	if *helpFlag {
 		flag.Usage()
-		return fmt.Errorf("D")
+		return nil
 	}
 
 	slog.Info("Loading configuration...")
 	config, err := config.GetConfig(cfgPath)
 	if err != nil {
-		slog.Error("failed to get config: %w", err)
+		slog.Error("failed to get config", "error", err)
 		return fmt.Errorf("failed to get config: %w", err)
 	}
 
 	if *port > 0 {
 		config.App.Port = *port
 	}
-	slog.Info("Configuration loaded: port=%d\n", config.App.Port)
+	slog.Info("Configuration loaded", "port", config.App.Port)
 
 	slog.Info("Creating application instance...")
 	app := server.NewApp(config)
@@ -53,9 +55,36 @@ func Start() error {
 		return fmt.Errorf("failed to initialize app: %w", err)
 	}
 
-	slog.Info("Starting server...")
-	app.Run()
+	// Set up graceful shutdown
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
-	slog.Info("Server stopped")
+	// Start server in goroutine
+	serverErrors := make(chan error, 1)
+	go func() {
+		slog.Info("Starting server...")
+		app.Run()
+		serverErrors <- nil
+	}()
+
+	// Block until we receive a shutdown signal or server error
+	select {
+	case err := <-serverErrors:
+		if err != nil {
+			return fmt.Errorf("server error: %w", err)
+		}
+		slog.Info("Server stopped normally")
+
+	case sig := <-shutdown:
+		slog.Info("Received shutdown signal", "signal", sig)
+
+		// Graceful shutdown
+		if err := app.Shutdown(); err != nil {
+			slog.Error("Failed to shutdown gracefully", "error", err)
+			return fmt.Errorf("failed to shutdown gracefully: %w", err)
+		}
+	}
+
+	slog.Info("Application stopped successfully")
 	return nil
 }

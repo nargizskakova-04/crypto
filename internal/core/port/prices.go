@@ -1,53 +1,53 @@
+// Replace the content of internal/core/port/prices.go
+
 package port
 
 import (
-<<<<<<< HEAD
 	"context"
-=======
 	"time"
 
->>>>>>> parent of 6a7ec7f (fixed)
 	"crypto/internal/core/domain"
-	"time"
 )
 
 type PriceRepository interface {
-	GetLatestPrice(symbol string) (domain.GetPrice, error)
-	GetLatestPriceByExchange(symbol string, exchange string) (domain.GetPrice, error)
+	// Store aggregated price data
+	StorePriceAggregation(ctx context.Context, agg domain.PriceAggregation) error
 
-	GetHighestPrice(symbol string) (domain.GetPrice, error)
-	GetHighestPriceExchange(symbol string, exchange string) (domain.GetPrice, error)
-	GetHighestPriceInDuration(symbol string, from time.Time, to time.Time) (domain.GetPrice, error)
-	GetHighestPriceInDurationExchange(symbol string, exchange string, from time.Time, to time.Time) (domain.GetPrice, error)
+	// Get aggregated prices in a time range
+	GetAggregatedPricesInRange(ctx context.Context, symbol, exchange string, from, to time.Time) ([]domain.PriceAggregation, error)
 
-	GetLowestPrice(symbol string) (domain.GetPrice, error)
-	GetLowestPriceExchange(symbol string, exchange string) (domain.GetPrice, error)
-	GetLowestPriceInDuration(symbol string, from time.Time, to time.Time) (domain.GetPrice, error)
-	GetLowestPriceInDurationExchange(symbol string, exchange string, from time.Time, to time.Time) (domain.GetPrice, error)
+	// Get highest price in a time range
+	GetHighestPriceInRange(ctx context.Context, symbol, exchange string, from, to time.Time) (*domain.PriceAggregation, error)
 
-	GetAveragePrice(symbol string) (domain.GetPrice, error)
-	GetAveragePriceExchange(symbol string, exchange string) (domain.GetPrice, error)
-	GetAveragePriceInDurationExchange(symbol string, exchange string, from time.Time, to time.Time) (domain.GetPrice, error)
+	// Get lowest price in a time range
+	GetLowestPriceInRange(ctx context.Context, symbol, exchange string, from, to time.Time) (*domain.PriceAggregation, error)
+
+	// Get average price in a time range
+	GetAveragePriceInRange(ctx context.Context, symbol, exchange string, from, to time.Time) (float64, error)
+
+	// Cleanup old data
+	CleanupOldData(ctx context.Context, olderThan time.Duration) error
 }
 
-<<<<<<< HEAD
 type PriceService interface {
+	// Get the latest price for a symbol across all exchanges
 	GetLatestPrice(ctx context.Context, symbol string) (*domain.MarketData, error)
 
+	// Get the latest price for a symbol from a specific exchange
 	GetLatestPriceByExchange(ctx context.Context, symbol, exchange string) (*domain.MarketData, error)
 
-	GetHighestPrice(ctx context.Context, symbol string, period time.Duration) (*domain.MarketData, error)
+	// Get highest price in a time period
+	GetHighestPrice(ctx context.Context, symbol string, period time.Duration) (*domain.PriceStatistics, error)
+	GetHighestPriceByExchange(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.PriceStatistics, error)
 
-	GetHighestPriceByExchange(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.MarketData, error)
+	// Get lowest price in a time period
+	GetLowestPrice(ctx context.Context, symbol string, period time.Duration) (*domain.PriceStatistics, error)
+	GetLowestPriceByExchange(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.PriceStatistics, error)
 
-	GetLowestPrice(ctx context.Context, symbol string, period time.Duration) (*domain.MarketData, error)
+	// Get average price in a time period
+	GetAveragePrice(ctx context.Context, symbol string, period time.Duration) (*domain.PriceStatistics, error)
+	GetAveragePriceByExchange(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.PriceStatistics, error)
 
-	GetLowestPriceByExchange(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.MarketData, error)
-
-	GetAveragePrice(ctx context.Context, symbol string, period time.Duration) (*domain.MarketData, error)
-
-	GetAveragePriceByExchange(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.MarketData, error)
+	// Store aggregated price data (used by aggregation service)
+	StorePriceAggregation(ctx context.Context, agg domain.PriceAggregation) error
 }
-=======
-type PriceService interface{}
->>>>>>> parent of 6a7ec7f (fixed)
