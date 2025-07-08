@@ -2,9 +2,8 @@ package port
 
 import (
 	"context"
-	"time"
-
 	"crypto/internal/core/domain"
+	"time"
 )
 
 type PriceRepository interface {
@@ -27,9 +26,19 @@ type PriceRepository interface {
 }
 
 type PriceService interface {
-	// Get the latest price for a symbol across all exchanges
 	GetLatestPrice(ctx context.Context, symbol string) (*domain.MarketData, error)
 
-	// Get the latest price for a symbol from a specific exchange
 	GetLatestPriceByExchange(ctx context.Context, symbol, exchange string) (*domain.MarketData, error)
+
+	GetHighestPrice(ctx context.Context, symbol string, period time.Duration) (*domain.MarketData, error)
+
+	GetHighestPriceByExchange(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.MarketData, error)
+
+	GetLowestPrice(ctx context.Context, symbol string, period time.Duration) (*domain.MarketData, error)
+
+	GetLowestPriceByExchange(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.MarketData, error)
+
+	GetAveragePrice(ctx context.Context, symbol string, period time.Duration) (*domain.MarketData, error)
+
+	GetAveragePriceByExchange(ctx context.Context, symbol, exchange string, period time.Duration) (*domain.MarketData, error)
 }
