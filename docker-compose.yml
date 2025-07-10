@@ -28,6 +28,33 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  
+  exchange1:
+    image: exchange1
+    ports:
+      - "40101:40101"
+    depends_on:
+      - cache
+      - db
+    restart: unless-stopped
+
+  exchange2:
+    image: exchange2
+    ports:
+      - "40102:40102"
+    depends_on:
+      - cache
+      - db
+    restart: unless-stopped
+
+  exchange3:
+    image: exchange3
+    ports:
+      - "40103:40103"
+    depends_on:
+      - cache
+      - db
+    restart: unless-stopped
  
 
 volumes:
